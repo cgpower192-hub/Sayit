@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SayIt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,560;0,9..144,650;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg-deep:#0a0c18;
+    --bg-deep-2:#12142a;
+    --glass:rgba(255,255,255,0.055);
+    --glass-border:rgba(255,255,255,0.12);
+    --ink:#f3f1ff;
+    --ink-dim:#9ea3c9;
+    --ink-dimmer:#6b709a;
+    --accent-pink:#ff6fd8;
+    --accent-violet:#8b7bff;
+    --accent-mint:#34e4c1;
+    --accent-gold:#ffc266;
+    --grad-hero: linear-gradient(120deg,#ff6fd8 0%, #8b7bff 55%, #5a7dff 100%);
+    --font-display:'Fraunces', serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+    --radius-lg:28px;
+    --radius-md:18px;
+    --radius-sm:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-body);
+    color:var(--ink);
+    background:
+      radial-gradient(ellipse 900px 600px at 15% -10%, rgba(139,123,255,0.35), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 110% 10%, rgba(255,111,216,0.22), transparent 60%),
+      radial-gradient(ellipse 800px 700px at 50% 120%, rgba(52,228,193,0.14), transparent 60%),
+      linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-deep-2) 100%);
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+  #particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+  .particle{
+    position:absolute;bottom:-40px;opacity:0;font-size:14px;
+    animation:floatUp linear forwards;
+    filter:drop-shadow(0 0 6px rgba(255,111,216,0.5));
+  }
+  @keyframes floatUp{
+    0%{transform:translateY(0) translateX(0) rotate(0deg) scale(0.6);opacity:0;}
+    10%{opacity:0.85;}
+    90%{opacity:0.6;}
+    100%{transform:translateY(-110vh) translateX(var(--drift,20px)) rotate(180deg) scale(1);opacity:0;}
+  }
+
+  .wrap{
+    position:relative;z-index:2;
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:48px 20px 120px;
+  }
+
+  .brand{
+    display:flex;align-items:center;gap:10px;margin-bottom:34px;
+    font-family:var(--font-mono);letter-spacing:0.14em;font-size:12px;
+    color:var(--ink-dim);text-transform:uppercase;
+  }
+  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--grad-hero);box-shadow:0 0 10px var(--accent-pink);}
+  .brand b{color:var(--ink);font-family:var(--font-display);font-size:15px;font-weight:650;letter-spacing:0;text-transform:none;}
+
+  .progress{
+    display:flex;gap:6px;margin-bottom:30px;
+  }
+  .progress .seg{
+    width:34px;height:4px;border-radius:3px;background:rgba(255,255,255,0.1);
+    position:relative;overflow:hidden;transition:background .3s;
+  }
+  .progress .seg.done{background:var(--grad-hero);}
+  .progress .seg.current{background:rgba(255,255,255,0.28);}
+
+  .card{
+    width:100%;max-width:560px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    backdrop-filter:blur(22px) saturate(140%);
+    -webkit-backdrop-filter:blur(22px) saturate(140%);
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+    padding:40px 36px 34px;
+    animation:cardIn .5s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98);}to{opacity:1;transform:none;}}
+
+  .eyebrow{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--ink-dimmer);margin:0 0 10px;
+  }
+  h1.hero{
+    font-family:var(--font-display);font-weight:650;font-size:38px;line-height:1.08;
+    margin:0 0 12px;
+    background:var(--grad-hero);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{color:var(--ink-dim);font-size:15px;line-height:1.5;margin:0 0 28px;}
+
+  label.field-label{
+    display:block;font-size:12px;color:var(--ink-dimmer);margin:0 0 7px;font-weight:500;letter-spacing:.02em;
+  }
+  .field{margin-bottom:18px;}
+  input[type=text], textarea{
+    width:100%;background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:var(--radius-sm);
+    padding:14px 16px;color:var(--ink);font-family:var(--font-body);font-size:15px;
+    outline:none;transition:border-color .2s, background .2s, box-shadow .2s;
+  }
+  input[type=text]:focus, textarea:focus{
+    border-color:var(--accent-violet);
+    background:rgba(255,255,255,0.06);
+    box-shadow:0 0 0 3px rgba(139,123,255,0.18);
+  }
+  textarea{resize:vertical;min-height:96px;line-height:1.5;font-family:var(--font-display);font-size:17px;}
+
+  .btn{
+    font-family:var(--font-body);font-weight:600;font-size:14.5px;
+    border:none;border-radius:999px;padding:14px 26px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s, filter .18s;
+  }
+  .btn:active{transform:scale(0.96);}
+  .btn-primary{
+    background:var(--grad-hero);color:#0a0c18;
+    box-shadow:0 10px 30px -8px rgba(139,123,255,0.55);
+  }
+  .btn-primary:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 14px 36px -8px rgba(139,123,255,0.7);}
+  .btn-ghost{
+    background:rgba(255,255,255,0.06);color:var(--ink);border:1px solid rgba(255,255,255,0.14);
+  }
+  .btn-ghost:hover{background:rgba(255,255,255,0.11);transform:translateY(-1px);}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
+
+  .row{display:flex;gap:12px;align-items:center;}
+  .row.between{justify-content:space-between;}
+  .footer-nav{display:flex;justify-content:space-between;align-items:center;margin-top:30px;}
+  .back-link{color:var(--ink-dimmer);font-size:13.5px;cursor:pointer;background:none;border:none;font-family:var(--font-body);padding:8px 4px;}
+  .back-link:hover{color:var(--ink-dim);}
+
+  /* category cards */
+  .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;}
+  .cat-card{
+    background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.1);
+    border-radius:var(--radius-md);padding:20px 16px;cursor:pointer;text-align:left;
+    transition:transform .2s cubic-bezier(.2,.8,.2,1), border-color .2s, background .2s;
+  }
+  .cat-card .icon{font-size:26px;display:block;margin-bottom:10px;transition:transform .25s;}
+  .cat-card .name{font-family:var(--font-display);font-size:16px;font-weight:600;display:block;margin-bottom:3px;}
+  .cat-card .desc{font-size:12px;color:var(--ink-dimmer);}
+  .cat-card:hover{transform:translateY(-3px) scale(1.02);border-color:rgba(255,255,255,0.24);background:rgba(255,255,255,0.06);}
+  .cat-card:hover .icon{transform:scale(1.18) rotate(-6deg);}
+  .cat-card.selected{border-color:var(--accent-violet);background:rgba(139,123,255,0.12);box-shadow:0 0 0 1px var(--accent-violet), 0 10px 30px -10px rgba(139,123,255,0.5);}
+
+  /* suggestion chips */
+  .chip-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+  .chip{
+    font-size:13px;padding:9px 14px;border-radius:999px;
+    background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.12);
+    color:var(--ink-dim);cursor:pointer;transition:all .18s;font-family:var(--font-body);
+  }
+  .chip:hover{background:rgba(255,255,255,0.09);color:var(--ink);border-color:rgba(255,255,255,0.25);transform:translateY(-1px);}
+  .chip.picked{background:var(--grad-hero);color:#0a0c18;border-color:transparent;font-weight:600;}
+
+  .char-count{text-align:right;font-size:11px;color:var(--ink-dimmer);margin-top:-12px;margin-bottom:16px;font-family:var(--font-mono);}
+
+  /* bg gallery */
+  .bg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;}
+  .bg-swatch{
+    position:relative;aspect-ratio:1/1;border-radius:14px;overflow:hidden;cursor:pointer;
+    border:2px solid transparent;background-size:cover;background-position:center;
+    transition:transform .2s, border-color .2s;
+  }
+  .bg-swatch:hover{transform:scale(1.04);}
+  .bg-swatch.selected{border-color:var(--accent-pink);box-shadow:0 0 0 1px var(--accent-pink);}
+  .bg-swatch::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.55) 100%);}
+  .bg-swatch span{position:absolute;bottom:6px;left:8px;font-size:10px;color:#fff;z-index:2;font-family:var(--font-mono);letter-spacing:.03em;}
+  .bg-swatch .check{position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--accent-pink);color:#0a0c18;display:none;align-items:center;justify-content:center;font-size:11px;z-index:3;}
+  .bg-swatch.selected .check{display:flex;}
+
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-top:1px solid rgba(255,255,255,0.08);}
+  .toggle-row:last-child{border-bottom:1px solid rgba(255,255,255,0.08);}
+  .toggle-label{font-size:13.5px;color:var(--ink-dim);}
+  .switch{width:38px;height:22px;border-radius:999px;background:rgba(255,255,255,0.14);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+  .switch.on{background:var(--grad-hero);}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;}
+  .switch.on::after{transform:translateX(16px);}
+
+  /* preview card (shared render used in step4 preview + step5 + view mode) */
+  .proposal-card{
+    position:relative;border-radius:22px;overflow:hidden;padding:36px 26px;
+    min-height:280px;display:flex;flex-direction:column;justify-content:flex-end;
+    background-size:cover;background-position:center;
+    box-shadow:0 20px 50px -15px rgba(0,0,0,0.6);
+    isolation:isolate;
+  }
+  .proposal-card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,12,24,0.15) 0%, rgba(10,12,24,0.88) 100%);z-index:0;}
+  .proposal-card .pc-content{position:relative;z-index:1;}
+  .pc-eyebrow{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:10px;}
+  .pc-msg{font-family:var(--font-display);font-size:24px;line-height:1.25;color:#fff;margin:0 0 20px;font-weight:560;}
+  .pc-buttons{display:flex;gap:10px;position:relative;flex-wrap:wrap;}
+  .pc-btn{padding:12px 22px;border-radius:999px;border:none;font-weight:650;font-size:14px;cursor:pointer;font-family:var(--font-body);}
+  .pc-btn.yes{background:var(--grad-hero);color:#0a0c18;}
+  .pc-btn.talk{background:rgba(255,255,255,0.14);color:#fff;border:1px solid rgba(255,255,255,0.3);}
+  .pc-btn.no{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.75);border:1px solid rgba(255,255,255,0.2);position:relative;transition:none;}
+  .pc-btn.no.dodging{position:absolute;}
+
+  /* share step */
+  .share-actions{display:flex;flex-direction:column;gap:10px;margin-top:22px;}
+  .share-row{display:flex;gap:10px;}
+  .link-box{
+    flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.14);
+    border-radius:var(--radius-sm);padding:12px 14px;font-family:var(--font-mono);font-size:12px;
+    color:var(--ink-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .qr-wrap{display:flex;justify-content:center;padding:18px;background:#fff;border-radius:16px;margin-top:16px;}
+  #qrcode{line-height:0;}
+
+  /* cat mascot */
+  #cat-dock{
+    position:fixed;right:26px;bottom:22px;z-index:5;
+    display:flex;align-items:flex-end;gap:0;
+    max-width:calc(100vw - 40px);
+  }
+  .bubble{
+    background:rgba(255,255,255,0.95);color:#1a1330;font-family:var(--font-body);
+    font-size:13px;font-weight:500;line-height:1.35;
+    padding:11px 15px;border-radius:16px 16px 4px 16px;
+    max-width:190px;margin-right:-8px;margin-bottom:14px;
+    box-shadow:0 12px 30px -8px rgba(0,0,0,0.5);
+    animation:bubbleIn .35s cubic-bezier(.2,.8,.2,1);
+    position:relative;
+  }
+  @keyframes bubbleIn{from{opacity:0;transform:translateY(6px) scale(.9);}to{opacity:1;transform:none;}}
+  .cat-svg{width:78px;height:78px;filter:drop-shadow(0 10px 20px rgba(0,0,0,0.5));cursor:pointer;}
+  .cat-blink{animation:blink 4.2s infinite;}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1);}94%{transform:scaleY(0.1);}96%{transform:scaleY(1);}}
+  .cat-bob{animation:bob 3.4s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+
+  .draft-toast{
+    position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(120%);
+    background:rgba(18,20,42,0.92);border:1px solid rgba(255,255,255,0.14);
+    color:var(--ink-dim);font-size:12.5px;padding:10px 18px;border-radius:999px;
+    backdrop-filter:blur(10px);z-index:6;transition:transform .4s cubic-bezier(.2,.8,.2,1);
+    display:flex;align-items:center;gap:8px;font-family:var(--font-body);
+  }
+  .draft-toast.show{transform:translateX(-50%) translateY(0);}
+  .draft-toast .pulse{width:6px;height:6px;border-radius:50%;background:var(--accent-mint);box-shadow:0 0 8px var(--accent-mint);}
+
+  .response-screen{text-align:center;padding:20px 0;}
+  .response-screen .big{font-size:56px;margin-bottom:12px;}
+
+  @media (max-width:600px){
+    .card{padding:28px 22px 26px;border-radius:22px;}
+    h1.hero{font-size:29px;}
+    .cat-grid{grid-template-columns:1fr 1fr;}
+    #cat-dock{right:14px;bottom:14px;}
+    .cat-svg{width:60px;height:60px;}
+    .bubble{max-width:150px;font-size:12px;padding:9px 12px;}
+    .bg-grid{grid-template-columns:repeat(3,1fr);}
+  }
+</style>
+</head>
+<body>
+<div id="particles"></div>
+<div class="wrap">
+  <div class="brand"><span class="dot"></span><b>SayIt</b></div>
+  <div class="progress" id="progress"></div>
+  <div class="card" id="app"></div>
+</div>
+
+<div id="cat-dock"></div>
+<div class="draft-toast" id="draftToast"><span class="pulse"></span><span id="draftToastText">Draft saved</span></div>
+
+<script>
+/* ---------------------------------------------------------------
+   SayIt — state
+--------------------------------------------------------------- */
+const BACKGROUNDS = [
+  { id:'sunset', label:'Sunset', url:'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?auto=format&fit=crop&w=800&q=70', fallback:'linear-gradient(135deg,#ff9966,#ff6fd8)' },
+  { id:'city', label:'City Night', url:'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=800&q=70', fallback:'linear-gradient(135deg,#141e30,#243b55)' },
+  { id:'texture', label:'Marble', url:'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=70', fallback:'linear-gradient(135deg,#3a3a3a,#141414)' },
+  { id:'cafe', label:'Cafe', url:'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=800&q=70', fallback:'linear-gradient(135deg,#6b4226,#3e2723)' },
+  { id:'stars', label:'Night Sky', url:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=800&q=70', fallback:'linear-gradient(135deg,#0f2027,#2c5364)' },
+  { id:'floral', label:'Floral', url:'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=70', fallback:'linear-gradient(135deg,#8b7bff,#ff6fd8)' },
+];
+
+const CATEGORIES = {
+  romantic: { label:'Romantic / Dating', icon:'❤️', desc:'Ask them out', accent:'var(--accent-pink)',
+    suggestions:["Will you go out with me?","Coffee this weekend — my treat?","I've had a crush on you for a while. Dinner Friday?","Just the two of us, movie night?","Be my Valentine?","Let's make it official — will you be my partner?"],
+    primaryLabel:'Yes!', secondaryLabel:"Let's talk", dodgeNo:true,
+    catLines:["Ooh, matters of the heart. Let's get this right.","Sweet — I'll help you pick the words.","Bold move. I like it."]},
+  business: { label:'Business / Deal Pitch', icon:'💼', desc:'Pitch or propose', accent:'var(--accent-mint)',
+    suggestions:["Let's collaborate on this project.","I'd like to propose a partnership.","Can we set up a call to discuss terms?","Here's my pitch — want to hear more?","Let's close this deal.","Open to a joint venture?"],
+    primaryLabel:"I'm in", secondaryLabel:"Let's talk", dodgeNo:false,
+    catLines:["Sharp pitch. Keep it clear and confident.","Straight to business, I respect it.","Numbers or no numbers, make it count."]},
+  social: { label:'Social / Hangout / Favor', icon:'🎉', desc:'Plans, favors, fun', accent:'var(--accent-violet)',
+    suggestions:["Road trip this weekend?","Can you help me move on Saturday?","Game night at mine?","Want to grab dinner with the crew?","Could you cover my shift?","Beach day — you in?"],
+    primaryLabel:"I'm in!", secondaryLabel:'Maybe', dodgeNo:false,
+    catLines:["Low stakes, high fun. Love it.","Easy ask, easy yes — probably.","Casual is my favorite setting."]},
+  playful: { label:'Playful / Custom', icon:'🃏', desc:'Anything goes', accent:'var(--accent-gold)',
+    suggestions:["I dare you to say yes.","This is a very serious proposal (it is not).","Will you accept this extremely important mission?","Say yes and I'll owe you one.","Choose wisely...","Write your own — surprise me."],
+    primaryLabel:"Absolutely", secondaryLabel:"Tell me more", dodgeNo:true,
+    catLines:["Ooh, mischief. I like where this is going.","No rules here. Go wild.","Whatever you write, I'm purring for it."]},
+};
+
+const DEFAULT_STATE = {
+  step:1, yourName:'', theirName:'', category:null, message:'',
+  background: BACKGROUNDS[0].id, showDodge:false,
+  primaryLabel:'', secondaryLabel:'',
+};
+
+let state = { ...DEFAULT_STATE };
+let draftSaveTimer = null;
+
+/* ---------------------------------------------------------------
+   Storage adapter — uses Claude's window.storage inside Claude
+   artifacts, falls back to real localStorage when this file is
+   hosted anywhere else (Netlify, GitHub Pages, etc).
+--------------------------------------------------------------- */
+const hasClaudeStorage = (typeof window !== 'undefined') && window.storage && typeof window.storage.set === 'function';
+
+async function storageSet(key, value, shared){
+  if(hasClaudeStorage){
+    try{ return await window.storage.set(key, value, shared); }catch(e){ /* fall through */ }
+  }
+  try{ localStorage.setItem((shared?'shared:':'personal:')+key, value); return {key,value,shared}; }
+  catch(e){ return null; }
+}
+async function storageGet(key, shared){
+  if(hasClaudeStorage){
+    try{ return await window.storage.get(key, shared); }catch(e){ return null; }
+  }
+  try{
+    const v = localStorage.getItem((shared?'shared:':'personal:')+key);
+    return v!=null ? {key,value:v,shared} : null;
+  }catch(e){ return null; }
+}
+
+async function saveDraft(){
+  try{
+    await storageSet('sayit:draft', JSON.stringify(state), false);
+    showDraftToast('Draft saved');
+  }catch(e){ /* silent */ }
+}
+async function loadDraft(){
+  try{
+    const r = await storageGet('sayit:draft', false);
+    if(r && r.value){
+      const parsed = JSON.parse(r.value);
+      state = { ...DEFAULT_STATE, ...parsed };
+    }
+  }catch(e){ /* no draft yet */ }
+}
+function queueSave(){
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(saveDraft, 500);
+}
+let toastTimer=null;
+function showDraftToast(text){
+  const t = document.getElementById('draftToast');
+  document.getElementById('draftToastText').textContent = text;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function genId(){
+  return Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4);
+}
+
+/* Proposal data is embedded directly in the share link (base64url in the
+   hash) so a recipient can open it the instant the artifact is published —
+   no dependency on shared storage having synced yet. We still write a copy
+   to shared storage as a backup lookup path and to record responses. */
+function encodePayload(obj){
+  const json = JSON.stringify(obj);
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+  return b64.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodePayload(str){
+  let s = str.replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length % 4) s += '=';
+  const json = decodeURIComponent(escape(atob(s)));
+  return JSON.parse(json);
+}
+
+async function publishProposal(){
+  const id = genId();
+  const cat = CATEGORIES[state.category] || CATEGORIES.playful;
+  const payload = {
+    id, yourName:state.yourName, theirName:state.theirName, category:state.category,
+    message:state.message, background:state.background,
+    primaryLabel: state.primaryLabel || cat.primaryLabel,
+    secondaryLabel: state.secondaryLabel || cat.secondaryLabel,
+    dodgeNo: state.showDodge,
+    createdAt: Date.now(),
+  };
+  try{ await storageSet('proposal:'+id, JSON.stringify(payload), true); }catch(e){ /* non-fatal, link still self-contained */ }
+  const token = encodePayload(payload);
+  return { id, token };
+}
+
+async function loadProposal(id){
+  try{
+    const r = await storageGet('proposal:'+id, true);
+    return r && r.value ? JSON.parse(r.value) : null;
+  }catch(e){ return null; }
+}
+
+async function recordResponse(id, answer){
+  try{
+    await storageSet('response:'+id, JSON.stringify({answer, at:Date.now()}), true);
+  }catch(e){}
+}
+
+/* ---------------------------------------------------------------
+   Particles (ambient hearts / sparkles)
+--------------------------------------------------------------- */
+function spawnParticle(){
+  const el = document.createElement('div');
+  const glyphs = ['♥','✦','·','♦'];
+  el.className='particle';
+  el.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+  el.style.left = Math.random()*100+'vw';
+  const dur = 9 + Math.random()*10;
+  el.style.animationDuration = dur+'s';
+  el.style.setProperty('--drift', (Math.random()*80-40)+'px');
+  el.style.color = Math.random()>0.5 ? 'rgba(255,111,216,0.55)' : 'rgba(139,123,255,0.55)';
+  el.style.fontSize = (10+Math.random()*14)+'px';
+  document.getElementById('particles').appendChild(el);
+  setTimeout(()=>el.remove(), dur*1000+200);
+}
+setInterval(spawnParticle, 900);
+for(let i=0;i<6;i++) setTimeout(spawnParticle, i*300);
+
+/* ---------------------------------------------------------------
+   Cat mascot
+--------------------------------------------------------------- */
+function catSVG(){
+  return `<svg class="cat-svg cat-bob" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="60" cy="100" rx="34" ry="8" fill="rgba(0,0,0,0.35)"/>
+    <path d="M30 40 L20 12 L44 30 Z" fill="#c9884f"/>
+    <path d="M90 40 L100 12 L76 30 Z" fill="#c9884f"/>
+    <path d="M32 38 L25 20 L42 32 Z" fill="#e8b98a"/>
+    <path d="M88 38 L95 20 L78 32 Z" fill="#e8b98a"/>
+    <ellipse cx="60" cy="66" rx="40" ry="34" fill="#d99a5b"/>
+    <ellipse cx="60" cy="70" rx="26" ry="22" fill="#f0c896"/>
+    <path d="M44 46 Q60 40 76 46" stroke="#b97a3c" stroke-width="2" fill="none" opacity="0.5"/>
+    <g class="cat-blink">
+      <ellipse cx="47" cy="60" rx="5.5" ry="6" fill="#2a1a12"/>
+      <ellipse cx="73" cy="60" rx="5.5" ry="6" fill="#2a1a12"/>
+      <circle cx="48.5" cy="58" r="1.4" fill="#fff"/>
+      <circle cx="74.5" cy="58" r="1.4" fill="#fff"/>
+    </g>
+    <circle cx="47" cy="60" r="11" fill="none" stroke="#2a1a12" stroke-width="2.4"/>
+    <circle cx="73" cy="60" r="11" fill="none" stroke="#2a1a12" stroke-width="2.4"/>
+    <line x1="58" y1="60" x2="62" y2="60" stroke="#2a1a12" stroke-width="2.4"/>
+    <line x1="36" y1="59" x2="30" y2="56" stroke="#2a1a12" stroke-width="2.2"/>
+    <line x1="84" y1="59" x2="90" y2="56" stroke="#2a1a12" stroke-width="2.2"/>
+    <path d="M56 72 Q60 76 64 72" stroke="#8a4b1e" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M20 72 Q34 70 42 74" stroke="#3a3a3a" stroke-width="1.4" opacity="0.55" fill="none"/>
+    <path d="M20 78 Q34 76 42 78" stroke="#3a3a3a" stroke-width="1.4" opacity="0.55" fill="none"/>
+    <path d="M100 72 Q86 70 78 74" stroke="#3a3a3a" stroke-width="1.4" opacity="0.55" fill="none"/>
+    <path d="M100 78 Q86 76 78 78" stroke="#3a3a3a" stroke-width="1.4" opacity="0.55" fill="none"/>
+    <path d="M46 80 L60 92 L74 80 Z" fill="#3b2f66"/>
+    <circle cx="60" cy="86" r="4.5" fill="#5a4a99"/>
+  </svg>`;
+}
+function renderCat(line){
+  const dock = document.getElementById('cat-dock');
+  dock.innerHTML = `<div class="bubble">${line}</div>${catSVG()}`;
+}
+function catLineFor(){
+  if(state.category && CATEGORIES[state.category]){
+    const lines = CATEGORIES[state.category].catLines;
+    return lines[Math.floor(Math.random()*lines.length)];
+  }
+  const generic = [
+    "Hi, I'm Proposal Cat. Let's make something great.",
+    "Take your time — I'm not going anywhere.",
+    "Looking good so far.",
+  ];
+  return generic[Math.floor(Math.random()*generic.length)];
+}
+
+/* ---------------------------------------------------------------
+   Rendering
+--------------------------------------------------------------- */
+const STEP_LABELS = ['Start','Category','Message','Design','Share'];
+
+function renderProgress(){
+  const el = document.getElementById('progress');
+  const totalSteps = 5;
+  el.innerHTML = STEP_LABELS.map((_,i)=>{
+    const n=i+1;
+    let cls='seg';
+    if(n < state.step) cls+=' done';
+    else if(n===state.step) cls+=' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+function esc(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function currentBg(id){
+  return BACKGROUNDS.find(b=>b.id===id) || BACKGROUNDS[0];
+}
+
+function app(){ return document.getElementById('app'); }
+
+function goStep(n){
+  state.step = n;
+  render();
+  queueSave();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function render(){
+  renderProgress();
+  renderCat(catLineFor());
+  if(state.step===1) return renderStep1();
+  if(state.step===2) return renderStep2();
+  if(state.step===3) return renderStep3();
+  if(state.step===4) return renderStep4();
+  if(state.step===5) return renderStep5();
+}
+
+/* Step 1 — hero + names */
+function renderStep1(){
+  app().innerHTML = `
+    <p class="eyebrow">Zero sign-up · takes 60 seconds</p>
+    <h1 class="hero">Say it without<br/>the hassle.</h1>
+    <p class="sub">Build a proposal, pitch, or invite — dating, business, or just for fun. No account, no wall, just say it.</p>
+    <div class="field">
+      <label class="field-label">Your name</label>
+      <input type="text" id="yourName" placeholder="e.g. Alex" value="${esc(state.yourName)}" maxlength="40" />
+    </div>
+    <div class="field">
+      <label class="field-label">Their name</label>
+      <input type="text" id="theirName" placeholder="e.g. Jordan" value="${esc(state.theirName)}" maxlength="40" />
+    </div>
+    <div class="footer-nav">
+      <span></span>
+      <button class="btn btn-primary" id="next1">Get started →</button>
+    </div>
+  `;
+  const yn=document.getElementById('yourName'), tn=document.getElementById('theirName');
+  yn.oninput = ()=>{state.yourName=yn.value; queueSave();};
+  tn.oninput = ()=>{state.theirName=tn.value; queueSave();};
+  document.getElementById('next1').onclick = ()=>{
+    state.yourName = yn.value.trim() || 'You';
+    state.theirName = tn.value.trim() || 'Them';
+    goStep(2);
+  };
+}
+
+/* Step 2 — category */
+function renderStep2(){
+  app().innerHTML = `
+    <p class="eyebrow">Step 2 of 5</p>
+    <h1 class="hero" style="font-size:28px;">What are you saying, ${esc(state.yourName)}?</h1>
+    <p class="sub">Pick the kind of proposal you're building for ${esc(state.theirName)}.</p>
+    <div class="cat-grid">
+      ${Object.entries(CATEGORIES).map(([key,c])=>`
+        <button class="cat-card ${state.category===key?'selected':''}" data-key="${key}">
+          <span class="icon">${c.icon}</span>
+          <span class="name">${c.label.split(' / ')[0]}</span>
+          <span class="desc">${c.desc}</span>
+        </button>
+      `).join('')}
+    </div>
+    <div class="footer-nav">
+      <button class="back-link" id="back2">← Back</button>
+      <button class="btn btn-primary" id="next2" ${state.category?'':'disabled'}>Continue →</button>
+    </div>
+  `;
+  document.querySelectorAll('.cat-card').forEach(elm=>{
+    elm.onclick = ()=>{
+      state.category = elm.dataset.key;
+      state.primaryLabel = CATEGORIES[state.category].primaryLabel;
+      state.secondaryLabel = CATEGORIES[state.category].secondaryLabel;
+      state.showDodge = CATEGORIES[state.category].dodgeNo;
+      renderCat(CATEGORIES[state.category].catLines[0]);
+      renderStep2();
+      queueSave();
+    };
+  });
+  document.getElementById('back2').onclick = ()=>goStep(1);
+  document.getElementById('next2').onclick = ()=>goStep(3);
+}
+
+/* Step 3 — suggestions + custom text */
+function renderStep3(){
+  const cat = CATEGORIES[state.category] || CATEGORIES.playful;
+  app().innerHTML = `
+    <p class="eyebrow">Step 3 of 5</p>
+    <h1 class="hero" style="font-size:28px;">Craft the message</h1>
+    <p class="sub">Tap a suggestion to start, then make it yours.</p>
+    <div class="chip-grid">
+      ${cat.suggestions.map(s=>`<button class="chip ${state.message===s?'picked':''}" data-txt="${esc(s)}">${esc(s)}</button>`).join('')}
+    </div>
+    <label class="field-label">Your proposal</label>
+    <textarea id="msg" maxlength="220" placeholder="Write your own, or tap a suggestion above...">${esc(state.message)}</textarea>
+    <div class="char-count"><span id="cc">${state.message.length}</span>/220</div>
+    <div class="footer-nav">
+      <button class="back-link" id="back3">← Back</button>
+      <button class="btn btn-primary" id="next3" ${state.message.trim()?'':'disabled'}>Continue →</button>
+    </div>
+  `;
+  const ta = document.getElementById('msg');
+  const cc = document.getElementById('cc');
+  const nextBtn = document.getElementById('next3');
+  ta.oninput = ()=>{
+    state.message = ta.value;
+    cc.textContent = ta.value.length;
+    nextBtn.disabled = !ta.value.trim();
+    queueSave();
+  };
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.onclick = ()=>{
+      state.message = chip.dataset.txt;
+      renderCat("Nice pick. Feel free to tweak it.");
+      renderStep3();
+      queueSave();
+    };
+  });
+  document.getElementById('back3').onclick = ()=>goStep(2);
+  nextBtn.onclick = ()=>goStep(4);
+}
+
+/* Step 4 — background + button config + live preview */
+function renderPreviewCard(){
+  const cat = CATEGORIES[state.category] || CATEGORIES.playful;
+  const bg = currentBg(state.background);
+  const primary = state.primaryLabel || cat.primaryLabel;
+  const secondary = state.secondaryLabel || cat.secondaryLabel;
+  return `
+    <div class="proposal-card" style="background-image:${bg.fallback};" id="previewCard">
+      <img src="${bg.url}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;" onerror="this.style.display='none'"/>
+      <div class="pc-content">
+        <div class="pc-eyebrow">${esc(state.yourName)} → ${esc(state.theirName)}</div>
+        <p class="pc-msg">${esc(state.message)}</p>
+        <div class="pc-buttons" id="pcButtons" style="position:relative;">
+          <button class="pc-btn yes">${esc(primary)}</button>
+          <button class="pc-btn talk">${esc(secondary)}</button>
+          ${state.showDodge ? `<button class="pc-btn no" id="dodgeBtn">No</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function wireDodge(){
+  const btn = document.getElementById('dodgeBtn');
+  const container = document.getElementById('pcButtons');
+  if(!btn || !container) return;
+  const dodge = ()=>{
+    const cw = container.clientWidth, ch = container.clientHeight;
+    const bw = btn.offsetWidth, bh = btn.offsetHeight;
+    const maxX = Math.max(cw-bw, 40), maxY = Math.max(ch-bh, 20);
+    const x = Math.random()*maxX, y = Math.random()*(maxY+30)-10;
+    btn.classList.add('dodging');
+    btn.style.left = x+'px';
+    btn.style.top = y+'px';
+  };
+  btn.addEventListener('mouseenter', dodge);
+  btn.addEventListener('touchstart', (e)=>{e.preventDefault(); dodge();}, {passive:false});
+}
+
+function renderStep4(){
+  app().innerHTML = `
+    <p class="eyebrow">Step 4 of 5</p>
+    <h1 class="hero" style="font-size:28px;">Design the card</h1>
+    <p class="sub">Choose a backdrop and set the response buttons.</p>
+    <label class="field-label">Background</label>
+    <div class="bg-grid">
+      ${BACKGROUNDS.map(b=>`
+        <div class="bg-swatch ${state.background===b.id?'selected':''}" data-id="${b.id}" style="background:${b.fallback};">
+          <img src="${b.url}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>
+          <div class="check">✓</div>
+          <span>${b.label}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <label class="field-label">Buttons</label>
+    <div class="field">
+      <input type="text" id="primaryLabel" placeholder="Primary button" value="${esc(state.primaryLabel)}" maxlength="20" />
+    </div>
+    <div class="field">
+      <input type="text" id="secondaryLabel" placeholder="Secondary button" value="${esc(state.secondaryLabel)}" maxlength="20" />
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Playful dodging "No" button</span>
+      <div class="switch ${state.showDodge?'on':''}" id="dodgeSwitch"></div>
+    </div>
+
+    <div style="margin-top:22px;">
+      <label class="field-label">Live preview</label>
+      ${renderPreviewCard()}
+    </div>
+
+    <div class="footer-nav">
+      <button class="back-link" id="back4">← Back</button>
+      <button class="btn btn-primary" id="next4">Continue →</button>
+    </div>
+  `;
+  document.querySelectorAll('.bg-swatch').forEach(elm=>{
+    elm.onclick = ()=>{ state.background = elm.dataset.id; renderStep4(); queueSave(); };
+  });
+  const pl = document.getElementById('primaryLabel'), sl = document.getElementById('secondaryLabel');
+  pl.oninput = ()=>{ state.primaryLabel = pl.value; document.getElementById('previewCard').outerHTML=renderPreviewCard(); wireDodge(); queueSave(); };
+  sl.oninput = ()=>{ state.secondaryLabel = sl.value; document.getElementById('previewCard').outerHTML=renderPreviewCard(); wireDodge(); queueSave(); };
+  document.getElementById('dodgeSwitch').onclick = ()=>{
+    state.showDodge = !state.showDodge;
+    renderStep4();
+    queueSave();
+  };
+  document.getElementById('back4').onclick = ()=>goStep(3);
+  document.getElementById('next4').onclick = ()=>goStep(5);
+  wireDodge();
+}
+
+/* Step 5 — share */
+async function renderStep5(){
+  app().innerHTML = `
+    <p class="eyebrow">Step 5 of 5</p>
+    <h1 class="hero" style="font-size:28px;">Ready to send</h1>
+    <p class="sub">Publishing your proposal...</p>
+  `;
+  const { id, token } = await publishProposal();
+  const url = location.origin + location.pathname + '#/p/' + token;
+  const cat = CATEGORIES[state.category] || CATEGORIES.playful;
+  app().innerHTML = `
+    <p class="eyebrow">Step 5 of 5</p>
+    <h1 class="hero" style="font-size:28px;">It's ready, ${esc(state.yourName)}</h1>
+    <p class="sub">Share this link with ${esc(state.theirName)} however you like.</p>
+    ${renderPreviewCard()}
+    <div class="share-actions">
+      <div class="share-row">
+        <div class="link-box" id="linkBox">${url}</div>
+        <button class="btn btn-ghost" id="copyBtn">Copy</button>
+      </div>
+      <div class="share-row">
+        <button class="btn btn-ghost" id="waBtn" style="flex:1;">Share on WhatsApp</button>
+        <button class="btn btn-ghost" id="qrBtn" style="flex:1;">Show QR code</button>
+      </div>
+    </div>
+    <div id="qrHolder"></div>
+    <div class="footer-nav">
+      <button class="back-link" id="back5">← Edit</button>
+      <button class="back-link" id="startOver">Start a new one</button>
+    </div>
+  `;
+  wireDodge();
+  document.getElementById('copyBtn').onclick = async ()=>{
+    try{
+      await navigator.clipboard.writeText(url);
+      showDraftToast('Link copied');
+    }catch(e){
+      showDraftToast('Copy failed — select manually');
+    }
+  };
+  document.getElementById('waBtn').onclick = ()=>{
+    const text = encodeURIComponent(`${state.yourName} sent you something: ${url}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+  document.getElementById('qrBtn').onclick = ()=>{
+    const holder = document.getElementById('qrHolder');
+    if(holder.innerHTML){ holder.innerHTML=''; return; }
+    holder.innerHTML = `<div class="qr-wrap"><div id="qrcode"></div></div>`;
+    try{
+      new QRCode(document.getElementById('qrcode'), {
+        text:url, width:180, height:180, colorDark:'#0a0c18', colorLight:'#ffffff'
+      });
+    }catch(e){
+      holder.innerHTML = `<p class="sub">QR generation unavailable right now — use the copy link instead.</p>`;
+    }
+  };
+  document.getElementById('back5').onclick = ()=>goStep(4);
+  document.getElementById('startOver').onclick = async ()=>{
+    state = { ...DEFAULT_STATE };
+    await saveDraft();
+    goStep(1);
+  };
+  renderCat("Sent! Or well — ready to be sent. Go on.");
+}
+
+/* ---------------------------------------------------------------
+   Viewer mode — someone opened a shared proposal link
+--------------------------------------------------------------- */
+async function renderViewer(token){
+  document.getElementById('progress').style.display='none';
+  let data = null;
+  try{ data = decodePayload(token); }catch(e){ data = null; }
+  if(!data){ data = await loadProposal(token); } // backward-compat: token might just be a bare id
+  const id = (data && data.id) || token;
+  if(!data){
+    app().innerHTML = `
+      <p class="eyebrow">SayIt</p>
+      <h1 class="hero" style="font-size:26px;">This proposal wandered off</h1>
+      <p class="sub">The link may be broken or expired. Ask them to resend it.</p>
+      <button class="btn btn-primary" onclick="location.href=location.pathname">Create your own →</button>
+    `;
+    renderCat("Hmm, I couldn't find that one.");
+    return;
+  }
+  const bg = currentBg(data.background);
+  app().innerHTML = `
+    <p class="eyebrow">A proposal for you</p>
+    <div class="proposal-card" style="background-image:${bg.fallback};" id="previewCard">
+      <img src="${bg.url}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;" onerror="this.style.display='none'"/>
+      <div class="pc-content">
+        <div class="pc-eyebrow">${esc(data.yourName)} → ${esc(data.theirName)}</div>
+        <p class="pc-msg">${esc(data.message)}</p>
+        <div class="pc-buttons" id="pcButtons" style="position:relative;">
+          <button class="pc-btn yes" id="yesBtn">${esc(data.primaryLabel)}</button>
+          <button class="pc-btn talk" id="talkBtn">${esc(data.secondaryLabel)}</button>
+          ${data.dodgeNo ? `<button class="pc-btn no" id="dodgeBtn">No</button>` : ''}
+        </div>
+      </div>
+    </div>
+    <div id="responseArea"></div>
+    <div class="footer-nav">
+      <span></span>
+      <button class="back-link" onclick="location.href=location.pathname">Make your own SayIt →</button>
+    </div>
+  `;
+  state.showDodge = data.dodgeNo;
+  wireDodge();
+  document.getElementById('yesBtn').onclick = async ()=>{
+    await recordResponse(id, data.primaryLabel);
+    document.getElementById('responseArea').innerHTML = `
+      <div class="response-screen"><div class="big">🎉</div><p class="sub">Sent — ${esc(data.yourName)} will be thrilled.</p></div>`;
+    renderCat("Yes! I love a happy ending.");
+  };
+  document.getElementById('talkBtn').onclick = async ()=>{
+    await recordResponse(id, data.secondaryLabel);
+    document.getElementById('responseArea').innerHTML = `
+      <div class="response-screen"><div class="big">💬</div><p class="sub">Noted — time for a real conversation.</p></div>`;
+    renderCat("Smart. Words work best out loud sometimes.");
+  };
+  renderCat("Someone's waiting on your answer, no pressure.");
+}
+
+/* ---------------------------------------------------------------
+   Boot
+--------------------------------------------------------------- */
+async function boot(){
+  const hash = location.hash;
+  const m = hash.match(/^#\/p\/(.+)$/);
+  if(m){
+    document.getElementById('cat-dock').style.display='flex';
+    await renderViewer(m[1]);
+    return;
+  }
+  await loadDraft();
+  if(!state.step) state.step = 1;
+  render();
+}
+boot();
+</script>
+</body>
+</html>
